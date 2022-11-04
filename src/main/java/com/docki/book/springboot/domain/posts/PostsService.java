@@ -1,10 +1,12 @@
 package com.docki.book.springboot.domain.posts;
 
+import com.docki.book.springboot.domain.event.RegisteredPostEvent;
 import com.docki.book.springboot.web.dto.PostsListResponseDto;
 import com.docki.book.springboot.web.dto.PostsResponseDto;
 import com.docki.book.springboot.web.dto.PostsSaveRequestDto;
 import com.docki.book.springboot.web.dto.PostsUpdateRequestDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -14,11 +16,17 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class PostsService {
+
+    private final ApplicationEventPublisher publisher;
+
     private final PostsRepository postsRepository;
 
     @Transactional
     public Long save(PostsSaveRequestDto requestDto) {
-        return postsRepository.save(requestDto.toEntity()).getId();
+        Posts newPost = postsRepository.save(requestDto.toEntity());
+        publisher.publishEvent(new RegisteredPostEvent(newPost.getTitle(), newPost.getContent(), newPost.getAuthor()));
+        System.out.println("########### POST 등록 완료!!!!!!!!!!");
+        return newPost.getId();
     }
 
     @Transactional
